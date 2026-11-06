@@ -1,0 +1,265 @@
+<!doctype html>
+<html lang="ko"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Gold Boy · 금·나스닥·ETH 차트 분석</title>
+<meta name="description" content="금(XAUUSD)·나스닥·ETH·원유 차트 분석: 피보나치·FVG·EMA·옵션 감마 구간과 시나리오">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans+KR:wght@400;500;600;700&display=swap">
+<style>
+body{margin:0}
+/* Layout: one phone-first column, sticky tab bar; a trading desk's slate ground with a gold accent for the instrument most traded here */
+:root{
+  --bg:#eef1f4; --panel:#ffffff; --panel-2:#f6f8fa; --line:#d6dce3; --ink:#16202b; --muted:#5b6876;
+  --accent:#a8740b; --accent-ink:#ffffff; --accent-soft:#f7ecd4;
+  --good:#1f7a4d; --good-soft:#e2f3ea; --bad:#b4372f; --bad-soft:#f9e3e1; --warn:#946200; --warn-soft:#fbf0d6;
+  --font-ui:"IBM Plex Sans KR","Apple SD Gothic Neo","Malgun Gothic",system-ui,sans-serif;
+  --font-num:"IBM Plex Mono",ui-monospace,"SFMono-Regular",Menlo,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0f151c; --panel:#18212b; --panel-2:#1e2833; --line:#2c3846; --ink:#e6ebf0; --muted:#94a1af;
+  --accent:#e2a83a; --accent-ink:#1a1204; --accent-soft:#3a2e15;
+  --good:#5cc995; --good-soft:#163527; --bad:#f07a70; --bad-soft:#3d1d1b; --warn:#e9b44c; --warn-soft:#3a2e15; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0f151c; --panel:#18212b; --panel-2:#1e2833; --line:#2c3846; --ink:#e6ebf0; --muted:#94a1af;
+  --accent:#e2a83a; --accent-ink:#1a1204; --accent-soft:#3a2e15;
+  --good:#5cc995; --good-soft:#163527; --bad:#f07a70; --bad-soft:#3d1d1b; --warn:#e9b44c; --warn-soft:#3a2e15; color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--font-ui);font-size:15px;line-height:1.55}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--bg)}
+.wrap{max-width:760px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:12px 48px}
+header.top{display:flex;align-items:baseline;justify-content:space-between;gap:12px;flex-wrap:wrap;padding-block:8px 4px}
+h1{font-size:22px;font-weight:700;margin:0;letter-spacing:-.01em;text-wrap:balance}
+h1 small{display:block;font-size:12px;font-weight:500;color:var(--muted);letter-spacing:.04em}
+.today{font-family:var(--font-num);font-size:13px;color:var(--muted)}
+nav.tabs{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--bg);display:grid;grid-template-columns:repeat(4,1fr);gap:4px;padding-block:8px;border-bottom:1px solid var(--line);margin-bottom:14px}
+nav.tabs button{font:inherit;font-size:14px;font-weight:600;border:1px solid transparent;background:transparent;color:var(--muted);padding:9px 4px;border-radius:8px;cursor:pointer}
+nav.tabs button[aria-selected="true"]{background:var(--panel);color:var(--ink);border-color:var(--line)}
+nav.tabs button:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible,summary:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+section.view{display:grid;gap:14px}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:14px 14px 16px;display:grid;gap:12px;min-width:0}
+.card h2{font-size:16px;margin:0;font-weight:700}
+.card h3{font-size:13px;margin:0;color:var(--muted);font-weight:600;letter-spacing:.03em}
+.hint{font-size:13px;color:var(--muted);margin:0}
+.grid2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.grid3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+@media (max-width:420px){.grid3{grid-template-columns:repeat(2,minmax(0,1fr))}}
+label.f{display:grid;gap:4px;font-size:12px;color:var(--muted);font-weight:500;min-width:0}
+input,select,textarea{font:inherit;font-size:15px;color:var(--ink);background:var(--panel-2);border:1px solid var(--line);border-radius:8px;padding:9px 10px;width:100%;min-width:0}
+input.num{font-family:var(--font-num);font-variant-numeric:tabular-nums}
+textarea{min-height:64px;resize:vertical}
+.seg{display:flex;gap:6px;flex-wrap:wrap}
+.seg button,.chip{font:inherit;font-size:13px;font-weight:500;border:1px solid var(--line);background:var(--panel-2);color:var(--ink);padding:7px 11px;border-radius:999px;cursor:pointer}
+.seg button[aria-pressed="true"],.chip[aria-pressed="true"]{background:var(--accent-soft);border-color:var(--accent);color:var(--ink)}
+.seg button.long[aria-pressed="true"]{background:var(--good-soft);border-color:var(--good)}
+.seg button.short[aria-pressed="true"]{background:var(--bad-soft);border-color:var(--bad)}
+.btn{font:inherit;font-weight:600;font-size:15px;border-radius:10px;padding:11px 14px;border:1px solid var(--line);background:var(--panel-2);color:var(--ink);cursor:pointer}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.btn.danger{color:var(--bad);border-color:var(--bad)}
+.btn.small{font-size:13px;padding:7px 10px;border-radius:8px}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.metrics{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}
+@media (max-width:520px){.metrics{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.metric{background:var(--panel-2);border-radius:10px;padding:10px 12px;display:grid;gap:2px}
+.metric span{font-size:12px;color:var(--muted)}
+.metric b{font-family:var(--font-num);font-size:20px;font-weight:600;font-variant-numeric:tabular-nums}
+.pos{color:var(--good)} .neg{color:var(--bad)}
+.banner{border-radius:10px;padding:10px 12px;font-size:14px;font-weight:500}
+.banner.ok{background:var(--good-soft);color:var(--good)}
+.banner.bad{background:var(--bad-soft);color:var(--bad)}
+.banner.warn{background:var(--warn-soft);color:var(--warn)}
+.calc{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.calc div{background:var(--panel-2);border-radius:8px;padding:8px 10px}
+.calc span{display:block;font-size:11px;color:var(--muted)}
+.calc b{font-family:var(--font-num);font-size:16px;font-variant-numeric:tabular-nums}
+.chk-group{display:grid;gap:6px}
+.chk{display:grid;grid-template-columns:22px 1fr;gap:10px;align-items:start;padding:8px 10px;border-radius:8px;background:var(--panel-2);cursor:pointer;font-size:14px}
+.chk input{width:18px;height:18px;margin:2px 0 0;accent-color:var(--accent);padding:0}
+.chk.auto{border:1px dashed var(--line)}
+.chk em{font-style:normal;font-size:12px;color:var(--muted);display:block}
+.progress{height:8px;border-radius:999px;background:var(--panel-2);overflow:hidden}
+.progress i{display:block;height:100%;background:var(--accent);width:0;transition:width .2s}
+@media (prefers-reduced-motion:reduce){.progress i{transition:none}}
+.trade{border:1px solid var(--line);border-radius:12px;background:var(--panel);overflow:hidden}
+.trade summary{list-style:none;cursor:pointer;padding:12px 14px;display:grid;grid-template-columns:1fr auto;gap:4px 10px;align-items:center}
+.trade summary::-webkit-details-marker{display:none}
+.t-title{font-weight:600;display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.t-sub{font-size:12px;color:var(--muted);font-family:var(--font-num)}
+.pill{font-size:11px;font-weight:600;padding:2px 8px;border-radius:999px;background:var(--panel-2);color:var(--muted);border:1px solid var(--line)}
+.pill.win{background:var(--good-soft);color:var(--good);border-color:transparent}
+.pill.loss{background:var(--bad-soft);color:var(--bad);border-color:transparent}
+.pill.open{background:var(--accent-soft);color:var(--accent);border-color:transparent}
+.pill.ex{border-style:dashed}
+.t-r{font-family:var(--font-num);font-weight:600;text-align:right}
+.t-body{padding:0 14px 14px;display:grid;gap:12px;border-top:1px solid var(--line);padding-top:12px}
+dl.kv{display:grid;grid-template-columns:auto 1fr;gap:4px 12px;margin:0;font-size:13px}
+dl.kv dt{color:var(--muted)} dl.kv dd{margin:0;font-family:var(--font-num);overflow-wrap:anywhere}
+.tbl-wrap{overflow-x:auto}
+table{border-collapse:collapse;width:100%;font-size:13px;min-width:360px}
+th,td{padding:7px 8px;border-bottom:1px solid var(--line);text-align:right;font-variant-numeric:tabular-nums}
+th:first-child,td:first-child{text-align:left}
+th{color:var(--muted);font-weight:600;font-size:12px}
+td{font-family:var(--font-num)} td:first-child{font-family:var(--font-ui)}
+.nodes{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.nodes div{border-radius:8px;padding:8px 10px;background:var(--panel-2)}
+.nodes span{font-size:11px;color:var(--muted);display:block}
+.nodes b{font-family:var(--font-num);font-size:15px}
+.empty{padding:22px 14px;text-align:center;color:var(--muted);font-size:14px;border:1px dashed var(--line);border-radius:12px}
+/* morning analysis */
+#anBody{display:grid;gap:10px;min-width:0}
+#anBody h3{margin-top:4px}
+.an-head{display:flex;justify-content:space-between;align-items:baseline;gap:8px;flex-wrap:wrap}
+.an-top{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+.an-price{font-family:var(--font-num);font-size:22px;font-weight:600;font-variant-numeric:tabular-nums}
+.bias{font-size:12px;font-weight:700;padding:3px 9px;border-radius:999px}
+.bias.up{background:var(--good-soft);color:var(--good)} .bias.down{background:var(--bad-soft);color:var(--bad)} .bias.flat{background:var(--panel-2);color:var(--muted)}
+.an-headline{font-weight:600;margin:0}
+.an-sum{margin:0;font-size:14px;white-space:pre-line}
+.chart{width:100%;height:auto;display:block;background:var(--panel-2);border-radius:10px}
+.chart text{font-family:var(--font-num);font-size:11px;fill:var(--muted)}
+.chart .zl{font-family:var(--font-ui);font-weight:600;font-size:11px}
+.z-res{fill:var(--bad);opacity:.13} .z-sup{fill:var(--good);opacity:.13} .z-liq{fill:var(--accent);opacity:.16} .z-fvg{fill:var(--muted);opacity:.14} .z-gamma{fill:#6d5bd0;opacity:.14}
+.t-res{fill:var(--bad)!important} .t-sup{fill:var(--good)!important} .t-liq{fill:var(--accent)!important} .t-fvg{fill:var(--muted)!important} .t-gamma{fill:#7d6be0!important}
+.cu{fill:var(--good);stroke:var(--good)} .cd{fill:var(--bad);stroke:var(--bad)}
+.wick{stroke-width:1}
+.px-line{stroke:var(--ink);stroke-dasharray:3 3;stroke-width:1;opacity:.6}
+.path-long{stroke:var(--good)} .path-short{stroke:var(--bad)} .path-wait{stroke:var(--muted)}
+.path{fill:none;stroke-width:2;stroke-dasharray:6 4}
+.legend{display:flex;gap:10px;flex-wrap:wrap;font-size:12px;color:var(--muted)}
+.legend i{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:4px;vertical-align:-1px}
+.zones{display:grid;gap:6px}
+.zone{display:grid;grid-template-columns:auto 1fr;gap:2px 10px;padding:8px 10px;border-radius:8px;background:var(--panel-2);border-left:3px solid var(--line);font-size:13px}
+.zone.res{border-left-color:var(--bad)} .zone.sup{border-left-color:var(--good)} .zone.liq{border-left-color:var(--accent)} .zone.gamma{border-left-color:#7d6be0}
+.zone b{font-family:var(--font-num);font-variant-numeric:tabular-nums;white-space:nowrap}
+.zone span{color:var(--muted)} .zone p{grid-column:1/-1;margin:0}
+.scen{display:grid;gap:8px}
+.sc{border:1px solid var(--line);border-radius:10px;padding:10px 12px;display:grid;gap:6px;font-size:14px}
+.sc.long{border-left:3px solid var(--good)} .sc.short{border-left:3px solid var(--bad)} .sc.wait{border-left:3px solid var(--muted)}
+.sc-t{font-weight:700} .sc p{margin:0}
+.sc .calc div{padding:6px 8px}
+/* live chart values (TradingView alert e-mails → live/{symbol}) */
+.lv-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+@media (max-width:460px){.lv-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.lv-grid div{background:var(--panel-2);border-radius:8px;padding:7px 10px;min-width:0}
+.lv-grid span{display:block;font-size:11px;color:var(--muted)}
+.lv-grid b{font-family:var(--font-num);font-size:14px;font-variant-numeric:tabular-nums;overflow-wrap:anywhere}
+.lv-where{margin:0;font-size:14px}
+body:not(.is-owner) .own{display:none!important}
+.share-note{font-size:13px;color:var(--muted);margin:0}
+.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(16px + env(safe-area-inset-bottom,0px));background:var(--ink);color:var(--bg);padding:9px 14px;border-radius:10px;font-size:14px;z-index:20}
+
+.foot{font-size:12px;color:var(--muted);text-align:center;margin-top:18px}
+</style></head><body>
+<div class="wrap">
+  <header class="top"><h1><small>금 · 나스닥 · 크립토 · 원유 차트 분석</small>Gold Boy</h1><div class="today" id="todayLabel"></div></header>
+  <div class="card" id="anCard">
+    <div class="an-head"><h2>오늘의 분석</h2><span class="hint" id="anStamp"></span></div>
+    <div class="seg" id="anTabs" role="tablist" aria-label="종목"></div>
+    <div id="anBody"><div class="empty">분석을 불러오는 중이에요…</div></div>
+  </div>
+  <p class="foot">개인 매매 메모를 공유하는 페이지예요. 투자 권유가 아니며, 모든 판단과 책임은 본인에게 있어요.<br>시세는 선물·현물 환산 추정치라 거래소 차트와 몇 포인트 다를 수 있어요.</p>
+</div>
+<script>
+(function(){
+const $=id=>document.getElementById(id);
+const num=v=>{const n=parseFloat(String(v??'').replace(/,/g,''));return isFinite(n)?n:null};
+const fmt=(n,d=2)=>n==null||!isFinite(n)?'–':n.toLocaleString('en-US',{minimumFractionDigits:d,maximumFractionDigits:d});
+const fmtS=(n,d=2)=>n==null||!isFinite(n)?'–':(n>0?'+':'')+fmt(n,d);
+const pad=n=>String(n).padStart(2,'0');
+function h(tag,attrs,...kids){const e=document.createElement(tag);if(attrs)for(const[k,v]of Object.entries(attrs)){if(v==null||v===false)continue;if(k==='class')e.className=v;else if(k==='text')e.textContent=v;else if(k.startsWith('on'))e.addEventListener(k.slice(2),v);else e.setAttribute(k,v===true?'':v)}for(const k of kids.flat()){if(k==null)continue;e.append(k.nodeType?k:document.createTextNode(String(k)))}return e}
+
+const pad2=n=>String(n).padStart(2,'0');
+let anDoc=null,anSym=null;
+try{anSym=localStorage.getItem('site-an')}catch(e){}
+const SVGNS='http://www.w3.org/2000/svg';
+function s(tag,attrs,...kids){const e=document.createElementNS(SVGNS,tag);for(const[k,v]of Object.entries(attrs||{}))if(v!=null)e.setAttribute(k,v);for(const k of kids)if(k!=null)e.append(k.nodeType?k:document.createTextNode(String(k)));return e}
+const ZK={res:'저항',sup:'지지',liq:'유동성',fvg:'FVG',gamma:'감마'};
+function digitsFor(sym){return 1}
+const fmtL=v=>v==null?'–':Number.isInteger(v)?fmt(v,0):fmt(v,1);
+function drawChart(it){
+  const W=Math.max(300,Math.min(720,Math.round($('anBody').clientWidth||480))),H=W<520?260:300,padL=6,padR=82,padT=10,padB=22;
+  const cs=(it.candles||[]).filter(c=>Array.isArray(c)&&c.length>=5);
+  if(cs.length<5)return null;
+  const fut=24,n=cs.length+fut,cw=(W-padL-padR)/n;
+  let lo=Math.min(...cs.map(c=>c[3])),hi=Math.max(...cs.map(c=>c[2]));
+  const span=hi-lo||1;
+  const zones=(it.zones||[]).filter(z=>num(z.lo)!=null&&num(z.hi)!=null&&z.hi>=lo-span*.6&&z.lo<=hi+span*.6);
+  const paths=(it.scenarios||[]).filter(p=>Array.isArray(p.path)&&p.path.length);
+  for(const z of zones){lo=Math.min(lo,z.lo);hi=Math.max(hi,z.hi)}
+  for(const p of paths)for(const v of p.path){if(num(v)!=null&&Math.abs(v-cs.at(-1)[4])<span*1.2){lo=Math.min(lo,v);hi=Math.max(hi,v)}}
+  const m=(hi-lo)*.04;lo-=m;hi+=m;
+  const y=v=>padT+(hi-v)/(hi-lo)*(H-padT-padB);
+  const x=i=>padL+cw*(i+.5);
+  const g=s('svg',{viewBox:`0 0 ${W} ${H}`,class:'chart',role:'img','aria-label':(it.symbol||'')+' 1시간봉 차트와 핵심 구간'});
+  // zones
+  const lastP=cs.at(-1)[4];const labs=[{y:y(lastP)+4,text:fmt(num(it.price)??lastP,digitsFor(it.symbol)),attrs:{style:'fill:var(--ink);font-weight:600'}}];
+  for(const z of zones){const k=ZK[z.kind]?z.kind:'fvg';const y1=y(z.hi),y2=y(z.lo);
+    g.append(s('rect',{x:padL,y:y1,width:W-padL-padR,height:Math.max(2,y2-y1),class:'z-'+k}));
+    labs.push({y:(y1+y2)/2+4,text:(z.label||ZK[k]).slice(0,8),attrs:{class:'zl t-'+k}})}
+  // candles
+  cs.forEach((c,i)=>{const up=c[4]>=c[1],cl=up?'cu':'cd';
+    g.append(s('line',{x1:x(i),x2:x(i),y1:y(c[2]),y2:y(c[3]),class:cl+' wick'}));
+    const top=y(Math.max(c[1],c[4])),bh=Math.max(1,Math.abs(y(c[1])-y(c[4])));
+    g.append(s('rect',{x:x(i)-cw*.35,y:top,width:Math.max(1,cw*.7),height:bh,class:cl}))});
+  // last price
+  const last=cs.at(-1)[4];
+  g.append(s('line',{x1:padL,x2:W-padR,y1:y(last),y2:y(last),class:'px-line'}));
+  // right-edge labels: keep price order, push apart to a 13px minimum gap, then pull back inside the plot
+  labs.sort((a,b)=>a.y-b.y);const GAP=13;
+  for(let i=1;i<labs.length;i++)if(labs[i].y-labs[i-1].y<GAP)labs[i].y=labs[i-1].y+GAP;
+  const over=labs.length?labs.at(-1).y-(H-padB):0;if(over>0)for(let i=labs.length-1;i>=0;i--){labs[i].y-=over;if(i>0&&labs[i].y-labs[i-1].y>=GAP)break;if(i>0)labs[i-1].y=Math.min(labs[i-1].y,labs[i].y-GAP)}
+  for(const l of labs)g.append(s('text',{x:W-padR+4,y:Math.max(padT+8,l.y),...l.attrs},l.text));
+  // scenario paths
+  for(const p of paths){const d=p.dir==='long'||p.dir==='short'?p.dir:'wait';const step=fut/p.path.length;
+    const pts=[[x(cs.length-1),y(last)],...p.path.map((v,j)=>[x(cs.length-1+step*(j+1)),y(v)])];
+    g.append(s('polyline',{points:pts.map(q=>q.map(v=>v.toFixed(1)).join(',')).join(' '),class:'path path-'+d}));
+    const e=pts.at(-1);g.append(s('text',{x:e[0]-4,y:e[1]-5,'text-anchor':'end',class:'zl',style:`fill:var(--${d==='long'?'good':d==='short'?'bad':'muted'})`},(p.name||'').split(' ')[0].slice(0,3)))}
+  // time ticks (KST)
+  const tstep=Math.max(6,Math.ceil(84/cw/6)*6);for(let i=Math.floor(tstep/2);i<cs.length;i+=tstep){const t=new Date((cs[i][0]+9*3600)*1000);
+    g.append(s('text',{x:x(i),y:H-6,'text-anchor':'middle'},`${t.getUTCMonth()+1}/${t.getUTCDate()} ${String(t.getUTCHours()).padStart(2,'0')}시`))}
+  return g;
+}
+function normAn(d){if(!d||!Array.isArray(d.items))return d;d.items=d.items.filter(it=>it&&it.symbol).map(it=>({...it,price:num(it.price),
+  zones:(Array.isArray(it.zones)?it.zones:[]).map(z=>{const a=num(z.lo),b=num(z.hi)??a;return{...z,lo:Math.min(a??b,b),hi:Math.max(a??b,b)}}).filter(z=>z.lo!=null&&isFinite(z.lo)),
+  scenarios:(Array.isArray(it.scenarios)?it.scenarios:[]).map(p=>({...p,entry:num(p.entry),sl:num(p.sl),tp:Array.isArray(p.tp)?p.tp.map(num):[],path:Array.isArray(p.path)?p.path.map(num).filter(v=>v!=null):[]}))}));return d}
+
+function renderAnalysis(){
+  const body=$('anBody'),tabsEl=$('anTabs');
+  const items=(anDoc&&Array.isArray(anDoc.items))?anDoc.items:[];
+  tabsEl.replaceChildren();
+  if(!items.length){body.replaceChildren(h('div',{class:'empty',text:'평일 아침 7시 46분에 자동으로 채워져요. 아직 받은 분석이 없어요.'}));$('anStamp').textContent='';return}
+  const old=false;
+  $('anStamp').textContent=(anDoc.date||'')+(anDoc.generatedAt?' '+new Date(anDoc.generatedAt).toLocaleTimeString('ko-KR',{hour:'2-digit',minute:'2-digit'}):'')+(old?' · 지난 분석':'');
+  if(!items.some(it=>it.symbol===anSym))anSym=items[0].symbol;
+  for(const it of items){tabsEl.append(h('button',{type:'button',role:'tab','aria-pressed':String(it.symbol===anSym),text:it.symbol,onclick:()=>{anSym=it.symbol;try{localStorage.setItem('site-an',anSym)}catch(e){}renderAnalysis()}}))}
+  const it=items.find(x=>x.symbol===anSym);const dg=digitsFor(it.symbol);
+  const bcls=it.bias==='상승'?'up':it.bias==='하락'?'down':'flat';
+  const kids=[];
+  if(old)kids.push(h('div',{class:'banner warn',text:'오늘 분석이 아직 없어 가장 최근 분석을 보여 주고 있어요.'}));
+  kids.push(h('div',{class:'an-top'},h('span',{class:'an-price',text:num(it.price)!=null?fmt(it.price,dg):'–'}),h('span',{class:'bias '+bcls,text:it.bias==='상승'||it.bias==='하락'?it.bias+' 우위':'중립 · 박스'}),h('span',{class:'hint',text:it.asOf||''})));
+  if(it.headline)kids.push(h('p',{class:'an-headline',text:it.headline}));
+  const ch=drawChart(it);
+  if(ch){kids.push(ch);kids.push(h('div',{class:'legend'},...[['res','저항','var(--bad)'],['sup','지지','var(--good)'],['liq','유동성 $$$','var(--accent)'],['gamma','감마 노드','#7d6be0'],['fvg','FVG','var(--muted)']].map(([,t,c])=>h('span',null,h('i',{style:'background:'+c+';opacity:.5'}),t)),h('span',{text:'점선 = 시나리오 예상 경로'})))}
+  if(it.summary)kids.push(h('p',{class:'an-sum',text:it.summary}));
+  const zs=(it.zones||[]).slice().sort((a,b)=>(num(b.hi)||0)-(num(a.hi)||0));
+  if(zs.length){kids.push(h('h3',{text:'핵심 구간 (위에서 아래로)'}));kids.push(h('div',{class:'zones'},...zs.map(z=>h('div',{class:'zone '+(z.kind||'')},h('b',{text:(z.lo===z.hi?fmtL(z.lo):fmtL(z.lo)+'–'+fmtL(z.hi))}),h('span',{text:(ZK[z.kind]||'')+(z.label?' · '+z.label:'')}),z.why?h('p',{text:z.why}):null))))}
+  const sc=it.scenarios||[];
+  if(sc.length){kids.push(h('h3',{text:'시나리오'}));kids.push(h('div',{class:'scen'},...sc.map(p=>{const d=p.dir==='long'||p.dir==='short'?p.dir:'wait';
+    const tp=Array.isArray(p.tp)?p.tp.filter(v=>num(v)!=null).map(fmtL).join(' / '):'';
+    return h('div',{class:'sc '+d},h('div',{class:'sc-t',text:(p.name||'')+' · '+(d==='long'?'매수':d==='short'?'매도':'관망')}),p.trigger?h('p',{text:'조건: '+p.trigger}):null,
+      (num(p.entry)!=null||num(p.sl)!=null||tp)?h('div',{class:'calc'},h('div',null,h('span',{text:'진입'}),h('b',{text:fmtL(p.entry)})),h('div',null,h('span',{text:'손절'}),h('b',{text:fmtL(p.sl)})),h('div',null,h('span',{text:'익절'}),h('b',{text:tp||'–'}))):null,
+      p.why?h('p',{class:'hint',text:p.why}):null)})))}
+  if(it.invalid)kids.push(h('p',{class:'hint',text:'무효 조건: '+it.invalid}));
+  const foot=[anDoc.macro,anDoc.dataNote].filter(Boolean).join('\n');
+  if(foot)kids.push(h('p',{class:'hint',style:'white-space:pre-line',text:foot}));
+  body.replaceChildren(...kids);
+}
+
+async function load(){
+  try{const r=await fetch('data.json?t='+Date.now(),{cache:'no-store'});if(!r.ok)throw 0;anDoc=normAn(await r.json());renderAnalysis();
+    const d=new Date();$('todayLabel').textContent=d.getFullYear()+'-'+pad2(d.getMonth()+1)+'-'+pad2(d.getDate());}
+  catch(e){$('anBody').replaceChildren(h('div',{class:'empty',text:'분석을 불러오지 못했어요. 잠시 뒤 새로고침해 주세요.'}))}
+}
+let rz;window.addEventListener('resize',()=>{clearTimeout(rz);rz=setTimeout(()=>{if(anDoc)renderAnalysis()},200)});
+load();setInterval(load,10*60*1000);
+})();
+</script></body></html>
